@@ -1,0 +1,35 @@
+{
+  "name": "ebium",
+  "version": "1.0.39",
+  "description": "Ebium - For World",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --windows nsis"
+  },
+  "build": {
+    "appId": "com.browser.ebium",
+    "productName": "Ebium",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "Ebium.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "author": "Buğlem",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.0.0"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.8.3"
+  }
+}

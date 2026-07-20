@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yeni Sekme</title>
+  <link rel="stylesheet" href="newtab.css">
+</head>
+<body>
+
+  <div class="dashboard">
+
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <span id="greeting" class="greeting-text">Hoş Geldin!</span>
+      <span class="top-spacer"></span>
+      <span id="date-text" class="date-text"></span>
+    </header>
+
+    <!-- Center Hero -->
+    <main class="hero">
+      <!-- Brand -->
+      <div class="brand-area">
+        <div class="brand-3d" id="brand-3d">
+          <img src="ebium.png" class="brand-logo" alt="Ebium">
+          <div class="brand-glow"></div>
+        </div>
+      </div>
+
+      <!-- Clock -->
+      <div class="clock" id="time-text">00:00</div>
+
+      <!-- Search -->
+      <div class="search-container">
+        <form class="search-box" id="search-form" action="https://www.google.com/search" method="GET">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" name="q" placeholder="Ara veya URL gir..." autocomplete="off">
+        </form>
+      </div>
+
+      <!-- Quick Access Grid -->
+      <div class="quick-grid" id="shortcuts-container">
+        <!-- Shortcuts injected by JS -->
+      </div>
+    </main>
+
+    <!-- Quote -->
+    <footer class="quote-area">
+      <div id="quote-box">
+        <p id="quote-text"></p>
+        <span id="quote-author"></span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Add Shortcut Modal -->
+  <div id="add-shortcut-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+      <h3>Yeni Kısayol Ekle</h3>
+      <input type="text" id="shortcut-title" placeholder="Başlık (örn: Udemy)">
+      <input type="text" id="shortcut-url" placeholder="URL (örn: udemy.com)">
+      <div class="modal-actions">
+        <button id="btn-cancel-shortcut" class="btn-ghost">İptal</button>
+        <button id="btn-save-shortcut" class="btn-accent">Ekle</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="newtab.js"></script>
+</body>
+</html>
