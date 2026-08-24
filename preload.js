@@ -33,12 +33,18 @@ if (window.location.protocol === 'file:') {
   /* ── Performance ─────────────────────────────────────────── */
   freeMemory: () => ipcRenderer.invoke('free-memory'),
 
+  /* ── Password Manager ─────────────────────────────────────── */
+  loadPasswords: () => ipcRenderer.invoke('load-passwords'),
+  savePassword: (entry) => ipcRenderer.invoke('save-password', entry),
+  deletePassword: (id) => ipcRenderer.invoke('delete-password', id),
+
   /* ── Favorites & History ─────────────────────────────────── */
   loadFavorites: () => ipcRenderer.invoke('load-favorites'),
   saveFavorites: (data) => ipcRenderer.invoke('save-favorites', data),
   toggleFavorite: (entry) => ipcRenderer.invoke('toggle-favorite', entry),
   loadHistory: () => ipcRenderer.invoke('load-history'),
   addHistory: (entry) => ipcRenderer.invoke('add-history', entry),
+  deleteHistoryItem: (url) => ipcRenderer.invoke('delete-history-item', url),
   clearHistory: () => ipcRenderer.invoke('clear-history'),
 
 

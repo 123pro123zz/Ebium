@@ -37,21 +37,21 @@ class SimpleStore {
   }
 }
 
-// Instantiate store immediately to read hardware settings before app is ready
 const store = new SimpleStore({
-  accentColor: '#007AFF',
+  accentColor: '#6366f1',
   searchEngine: 'google',
   favorites: [],
   history: [],
+  passwords: [],
   disableHWAccel: false,
   gamerMode: false,
   adBlocker: false,
   startupBehavior: 'newtab',
   lastOpenTabs: [],
   themeMode: 'dark',
-  backgroundColor: '#0a0a0c',
-  surfaceColor: '#1a1a1c',
-  textColor: '#e8eaed',
+  backgroundColor: '#09090b',
+  surfaceColor: '#121316',
+  textColor: '#f4f4f5',
   wallpaperEnabled: false,
   petData: null
 });
@@ -158,6 +158,8 @@ function createBrowserView(tabId, url) {
   });
 
   tabs.set(tabId, view);
+  tabUrls.set(tabId, url);
+  saveOpenTabs();
   mainWindow.addBrowserView(view);
   view.setBounds(viewBounds());
   view.setAutoResize({ width: true, height: true });
@@ -361,7 +363,13 @@ ipcMain.handle('free-memory', async () => {
 
 let initialTabsCreated = false;
 ipcMain.handle('request-initial-tabs', () => {
-  if (initialTabsCreated) return [];
+  if (initialTabsCreated) {
+    const existing = [];
+    for (const [tabId] of tabs) {
+      existing.push({ tabId, url: tabUrls.get(tabId) || 'ebium://yeni-sekme' });
+    }
+    return existing;
+  }
   initialTabsCreated = true;
 
   const behavior = store.get('startupBehavior');
@@ -378,7 +386,6 @@ ipcMain.handle('request-initial-tabs', () => {
     openedTabs.push({ tabId, url });
   }
 
-  // Small delay before returning so the renderer gets the active tab view immediately
   return openedTabs;
 });
 
@@ -510,7 +517,12 @@ ipcMain.handle('save-settings', (_e, data) => {
   if (data.surfaceColor) store.set('surfaceColor', data.surfaceColor);
   if (data.textColor) store.set('textColor', data.textColor);
   if (data.accentColor) store.set('accentColor', data.accentColor);
-  if (data.searchEngine) store.set('searchEngine', data.searchEngine);
+  if (data.searchEngine) {
+    store.set('searchEngine', data.searchEngine);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('theme-updated', { searchEngine: data.searchEngine });
+    }
+  }
   if (data.disableHWAccel !== undefined) store.set('disableHWAccel', data.disableHWAccel);
   if (data.gamerMode !== undefined) {
     store.set('gamerMode', data.gamerMode);
@@ -520,7 +532,7 @@ ipcMain.handle('save-settings', (_e, data) => {
   if (data.startupBehavior) store.set('startupBehavior', data.startupBehavior);
   if (data.wallpaperEnabled !== undefined) store.set('wallpaperEnabled', data.wallpaperEnabled);
 
-  mainWindow.setBackgroundColor('#0a0a0c');
+  mainWindow.setBackgroundColor('#09090b');
   return { success: true };
 });
 
@@ -554,24 +566,9 @@ ipcMain.handle('load-wallpaper', async () => {
   }
 });
 
+/* ── Favorites ────────────────────────────────────────────── */
 ipcMain.handle('load-favorites', () => store.get('favorites'));
 ipcMain.handle('save-favorites', (_e, fav) => store.set('favorites', fav));
-
-ipcMain.handle('load-history', () => store.get('history'));
-ipcMain.handle('save-history', (_e, hist) => store.set('history', hist));
-
-ipcMain.handle('add-history', (_e, entry) => {
-  const history = store.get('history') || [];
-  history.unshift(entry);
-  if (history.length > 200) history.length = 200;
-  store.set('history', history);
-});
-
-ipcMain.handle('clear-history', () => {
-  store.set('history', []);
-  return true;
-});
-
 ipcMain.handle('toggle-favorite', (_e, entry) => {
   let favs = store.get('favorites') || [];
   const idx = favs.findIndex(f => f.url === entry.url);
@@ -581,12 +578,65 @@ ipcMain.handle('toggle-favorite', (_e, entry) => {
   return favs;
 });
 
+/* ── History ──────────────────────────────────────────────── */
+ipcMain.handle('load-history', () => store.get('history') || []);
+ipcMain.handle('save-history', (_e, hist) => store.set('history', hist));
+ipcMain.handle('add-history', (_e, entry) => {
+  const history = store.get('history') || [];
+  history.unshift(entry);
+  if (history.length > 200) history.length = 200;
+  store.set('history', history);
+});
+ipcMain.handle('delete-history-item', (_e, url) => {
+  let history = store.get('history') || [];
+  if (!Array.isArray(history)) history = [];
+  history = history.filter(h => h.url !== url);
+  store.set('history', history);
+  return history;
+});
+ipcMain.handle('clear-history', () => {
+  store.set('history', []);
+  return true;
+});
 
+/* ── Password Manager ─────────────────────────────────────── */
+ipcMain.handle('load-passwords', () => store.get('passwords') || []);
+
+ipcMain.handle('save-password', (_e, entry) => {
+  let passwords = store.get('passwords') || [];
+  if (!Array.isArray(passwords)) passwords = [];
+  
+  if (entry.id) {
+    const idx = passwords.findIndex(p => p.id === entry.id);
+    if (idx >= 0) {
+      passwords[idx] = { ...passwords[idx], ...entry, updatedAt: Date.now() };
+    } else {
+      passwords.unshift({ ...entry, id: entry.id || `pwd-${Date.now()}`, createdAt: Date.now() });
+    }
+  } else {
+    passwords.unshift({ ...entry, id: `pwd-${Date.now()}`, createdAt: Date.now() });
+  }
+  
+  store.set('passwords', passwords);
+  return passwords;
+});
+
+ipcMain.handle('delete-password', (_e, id) => {
+  let passwords = store.get('passwords') || [];
+  if (!Array.isArray(passwords)) passwords = [];
+  passwords = passwords.filter(p => p.id !== id);
+  store.set('passwords', passwords);
+  return passwords;
+});
 
 /* ── Lifecycle ───────────────────────────────────────────── */
 app.whenReady().then(() => {
   createWindow();
   if (store.get('adBlocker')) applyAdBlocker();
+
+  mainWindow.on('close', () => {
+    saveOpenTabs();
+  });
 
   // Auto Updater Background Check
   try {
@@ -601,6 +651,10 @@ app.whenReady().then(() => {
   } catch (err) {
     console.log('Update check failed', err);
   }
+});
+
+app.on('before-quit', () => {
+  saveOpenTabs();
 });
 
 ipcMain.handle('accept-update', () => {
